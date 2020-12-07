@@ -38,7 +38,7 @@ const NasaApiForm = () => {
 
     switch (selectedApi) {
       case "Apod":
-        urlToPass = "https://api.nasa.gov/planetary/apod?api_key=";
+        urlToPass = "https://api.nasa.gov/planetary/apod?hd=true&api_key=";
         break;
       case "Mars":
         urlToPass =
