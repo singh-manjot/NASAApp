@@ -1,76 +1,17 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import NasaApi from "./NasaApi/NasaApi";
-import "./NasaApiForm.css";
-import Title from "./NasaApi/Title/Title";
+import "../global.css";
+import { withRouter } from "react-router-dom";
 
-class NasaApiForm extends Component {
-  constructor(props) {
-    super(props);
-    this.handleApiCheck = this.handleApiCheck.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.state = {
-      apiUrl: "",
-      showForm: true,
-      api: {},
-      apiKey:"",                      ////////////////////////INSERT YOUR KEY HERE
-      apiName: ""
-    };
-  }
+const NasaApiForm = () => {
+  const [apiUrl, setApiUrl] = useState("");
+  const [showForm, setShowForm] = useState(true);
+  const [apiName, setApiName] = useState("");
+  const apiKey = process.env.REACT_APP_API_KEY;
 
-  render() {
-    if (this.state.showForm) {
-      return (
-        <div>
-          <br />
-          <br />
-          <br />
-          <br />
-          <Title
-            head="Welcome to Max's guide to the Universe"
-            subhead="I mean NASA's guide to the Universe"
-          />
-          <form onSubmit={this.handleSubmit} className="favFormStyle">
-            <h4>Select a topic from the list below:</h4>
-            <select id="apiName" onChange={this.handleApiCheck}>
-              <option value="Epic">Earth Polychromatic Imaging Camera</option>
-              <option value="Mars">Mars Rover</option>
-              <option value="Apod">Astronomy Picture Of The Day</option>
-            </select>
-            <br />
-            <br />
-            <br />
-            <br />
-            <div className="favFormStyle" id="description">
-              Click Submit for a picture of our very own earth from NASA's
-              satellite!!!
-            </div>
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <input type="submit" value="Submit" className="submitStyle" />
-            <br />
-            <br />
-          </form>
-        </div>
-      );
-    } else {
-      return (
-        <NasaApi url={this.state.apiUrl} apiSelected={this.state.apiName} />
-      );
-    }
-  }
-
-  handleApiCheck(event) {
-    let selectedapi = this.state.api;
-    selectedapi[event.target.value] = event.target.checked;
-    this.setState({
-      api: selectedapi
-    });
-    let a = document.getElementById("apiName");
-    let descApi = a.options[a.selectedIndex].value;
+  const changeApiDescription = () => {
+    let apiName = document.getElementById("apiName");
+    let descApi = apiName.options[apiName.selectedIndex].value;
 
     if (descApi === "Apod") {
       document.getElementById("description").innerHTML =
@@ -84,49 +25,73 @@ class NasaApiForm extends Component {
 
     if (descApi === "Epic") {
       document.getElementById("description").innerHTML =
-        "Click Submit for a picture of our very own earth from NASA's satellite!!!";
+        "Click Submit for a picture of our very own home planet from NASA's satellite!!!";
     }
-  }
+  };
 
-  handleSubmit(event) {
-    var urlToPass = "";
-
+  const handleSubmit = (event) => {
     event.preventDefault();
-    let e = document.getElementById("apiName");
-    let selectedApi = e.options[e.selectedIndex].value;
-    if (selectedApi === "Apod") {
-      urlToPass =
-        "https://api.nasa.gov/planetary/apod?api_key=" + this.state.apiKey;
+  
+    let urlToPass = "";
+    let apiName = document.getElementById("apiName");
+    let selectedApi = apiName.options[apiName.selectedIndex].value;
+
+    switch (selectedApi) {
+      case "Apod":
+        urlToPass = "https://api.nasa.gov/planetary/apod?api_key=";
+        break;
+      case "Mars":
+        urlToPass =
+          "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?earth_date=2015-6-3&api_key=";
+        break;
+      case "Epic":
+        urlToPass = "https://api.nasa.gov/EPIC/api/natural?api_key=";
+        break;
+      default:
+        urlToPass = "https://api.nasa.gov/planetary/apod?api_key=";
+        break;
     }
 
-    if (selectedApi === "Mars") {
-      urlToPass =
-        "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?earth_date=2015-6-3&api_key=" +
-        this.state.apiKey;
-    }
-    if (selectedApi === "Epic") {
-      urlToPass =
-        "https://api.nasa.gov/EPIC/api/natural?api_key=" + this.state.apiKey;
-    }
+    urlToPass += apiKey;
 
     fetch(urlToPass)
-      .then(response => this.handleHTTPErrors(response))
+      .then((response) => handleHTTPErrors(response))
       .then(() => {
-        this.setState({
-          apiUrl: urlToPass,
-          apiName: selectedApi,
-          showForm: false
-        });
+        setApiUrl(urlToPass);
+        setApiName(selectedApi);
+        setShowForm(false);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
       });
-  }
+  };
 
-  handleHTTPErrors(response) {
+  const handleHTTPErrors = (response) => {
     if (!response.ok) throw Error(response.status + ": " + response.statusText);
     return response;
-  }
-}
+  };
+
+  const form = showForm ? (
+    <div className="form">
+      <h1 className="title">Welcome to NASA's guide to the Universe</h1>
+      <form onSubmit={(event) => handleSubmit(event)} className="favFormStyle">
+        <h3>Please select a topic from the list below:</h3>
+        <select id="apiName" onChange={changeApiDescription}>
+          <option value="Epic">Earth Polychromatic Imaging Camera</option>
+          <option value="Mars">Mars Rover</option>
+          <option value="Apod">Astronomy Picture Of The Day</option>
+        </select>
+        <div id="description">
+          Click Submit for a picture of our very own home planet from NASA's
+          satellite!!!
+        </div>
+        <input type="submit" value="Submit" className="submitStyle" />
+      </form>
+    </div>
+  ) : (
+    <NasaApi url={apiUrl} apiSelected={apiName} />
+  );
+  return form;
+};
 
 export default withRouter(NasaApiForm);
